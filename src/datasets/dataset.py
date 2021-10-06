@@ -6,12 +6,13 @@ import torch
 class ImputationDataset(Dataset):
     """Dynamically computes missingness (noise) mask for each sample"""
 
-    def __init__(self, data, indices, mean_mask_length=3, masking_ratio=0.15,
+    def __init__(self, data, indices, max_len=100, mean_mask_length=3, masking_ratio=0.15,
                  mode='separate', distribution='geometric', exclude_feats=None):
         super(ImputationDataset, self).__init__()
-
+        self.max_len = max_len
         self.data = data  # this is a subclass of the BaseData class in data.py
         self.IDs = indices  # list of data IDs, but also mapping between integer index and ID
+
         self.feature_df = self.data.feature_df.loc[self.IDs]
 
         self.masking_ratio = masking_ratio
@@ -30,8 +31,16 @@ class ImputationDataset(Dataset):
             mask: (seq_length, feat_dim) boolean tensor: 0s mask and predict, 1s: unaffected input
             ID: ID of sample
         """
+        series_index = []
+        index = self.IDs[ind]
+        for i in range(self.max_len):
+            series_index.append(index)
+            index = index+1
 
-        X = self.feature_df.loc[self.IDs[ind]].values  # (seq_length, feat_dim) array
+        X = self.data.feature_df.loc[series_index].values  # (seq_length, feat_dim) array
+        # print("Xshape")
+        # print(np.array(self.feature_df).shape,len(self.IDs))
+        # print(self.IDs[ind],X.shape)
         mask = noise_mask(X, self.masking_ratio, self.mean_mask_length, self.mode, self.distribution,
                           self.exclude_feats)  # (seq_length, feat_dim) boolean array
 
@@ -208,7 +217,7 @@ def collate_unsuperv(data, max_len=None, mask_compensation=False):
 
     batch_size = len(data)
     features, masks, IDs = zip(*data)
-
+    print(len(features),len(features[0]))
     # Stack and pad features and masks (convert 2D to 3D tensors, i.e. add batch dimension)
     lengths = [X.shape[0] for X in features]  # original sequence length for each time series
     if max_len is None:
@@ -218,6 +227,9 @@ def collate_unsuperv(data, max_len=None, mask_compensation=False):
                                     dtype=torch.bool)  # (batch_size, padded_length, feat_dim) masks related to objective
     for i in range(batch_size):
         end = min(lengths[i], max_len)
+        # X[i, :end, :] = features[i][:end, :]
+        # target_masks[i, :end, :] = masks[i][:end, :]
+
         X[i, :end, :] = features[i][:end, :]
         target_masks[i, :end, :] = masks[i][:end, :]
 

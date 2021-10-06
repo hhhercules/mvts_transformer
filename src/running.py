@@ -36,7 +36,7 @@ def pipeline_factory(config):
     task = config['task']
 
     if task == "imputation":
-        return partial(ImputationDataset, mean_mask_length=config['mean_mask_length'],
+        return partial(ImputationDataset, max_len=config['data_window_len'], mean_mask_length=config['mean_mask_length'],
                        masking_ratio=config['masking_ratio'], mode=config['mask_mode'],
                        distribution=config['mask_distribution'], exclude_feats=config['exclude_feats']),\
                         collate_unsuperv, UnsupervisedRunner

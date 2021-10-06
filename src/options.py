@@ -96,7 +96,7 @@ class Options(object):
         self.parser.add_argument('--mask_mode', choices={'separate', 'concurrent'}, default='separate',
                                  help=("Imputation: whether each variable should be masked separately "
                                        "or all variables at a certain positions should be masked concurrently"))
-        self.parser.add_argument('--mask_distribution', choices={'geometric', 'bernoulli'}, default='geometric',
+        self.parser.add_argument('--mask_distribution', choices={'geometric', 'bernoulli'}, default='bernoulli',
                                  help=("Imputation: whether each mask sequence element is sampled independently at random"
                                        "or whether sampling follows a markov chain (stateful), resulting in "
                                        "geometric distributions of masked squences of a desired mean_mask_length"))
